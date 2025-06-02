@@ -1,0 +1,44 @@
+classDiagram
+    class User {
+        +userId: int
+        +email: str
+        +password: str
+        +googleId: str
+        +profile: Profile
+        +register(email: str, password: str): bool
+        +login(email: str, password: str): str
+        +updateProfile(profile: Profile): bool
+    }
+    class Profile {
+        +name: str
+        +phone: str
+        +address: str
+    }
+    class Garage {
+        +garageId: int
+        +ownerId: int
+        +photos: list[str]
+        +dimensions: Dimensions
+        +accessType: str
+        +covered: bool
+        +description: str
+        +createListing(ownerId: int, details: dict): bool
+        +updateListing(garageId: int, details: dict): bool
+    }
+    class Dimensions {
+        +length: float
+        +width: float
+        +height: float
+    }
+    class Booking {
+        +bookingId: int
+        +userId: int
+        +garageId: int
+        +date: str
+        +createBooking(userId: int, garageId: int, date: str): bool
+        +cancelBooking(bookingId: int): bool
+    }
+    User --> Profile
+    Garage --> Dimensions
+    Booking --> User
+    Booking --> Garage

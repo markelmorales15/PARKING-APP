@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant U as User
+    participant A as AuthService
+    participant G as GarageService
+    participant B as BookingService
+    participant DB as Database
+    U->>A: register(email, password)
+    A->>DB: store user credentials
+    DB-->>A: success
+    A-->>U: registration successful
+    U->>A: login(email, password)
+    A->>DB: verify credentials
+    DB-->>A: success
+    A-->>U: JWT token
+    U->>G: createListing(details)
+    G->>DB: store garage details
+    DB-->>G: success
+    G-->>U: listing created
+    U->>G: searchGarage(filters)
+    G->>DB: query garages
+    DB-->>G: garage list
+    G-->>U: display garages
+    U->>B: createBooking(garageId, date)
+    B->>DB: store booking details
+    DB-->>B: success
+    B-->>U: booking confirmed
+    U->>B: cancelBooking(bookingId)
+    B->>DB: delete booking
+    DB-->>B: success
+    B-->>U: booking canceled
