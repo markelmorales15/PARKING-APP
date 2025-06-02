@@ -12,6 +12,45 @@ const GarageDetail = ({ garage, onClose }) => {
   const [isLoadingReviews, setIsLoadingReviews] = useState(true); // Loading state for reviews
   const [reviewError, setReviewError] = useState(null); // Error state for reviews
 
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!garage || !garage.id) return;
+      try {
+        setIsLoadingBookings(true);
+        const response = await fetch(`/api/bookings/garage/${garage.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch booking data');
+        }
+        const data = await response.json();
+        setBookings(data);
+      } catch (err) {
+        setBookingError(err.message);
+      } finally {
+        setIsLoadingBookings(false);
+      }
+    };
+
+    const fetchReviews = async () => {
+      if (!garage || !garage.id) return;
+      try {
+        setIsLoadingReviews(true);
+        const response = await fetch(`/api/reviews/garage/${garage.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch review data');
+        }
+        const data = await response.json();
+        setReviews(data.reviews); // Assuming the backend returns { reviews: [...] }
+      } catch (err) {
+        setReviewError(err.message);
+      } finally {
+        setIsLoadingReviews(false);
+      }
+    };
+
+    fetchBookings();
+    fetchReviews();
+  }, [garage]); // Refetch bookings and reviews if the garage prop changes
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
       <div className="bg-white p-6 rounded-lg w-full max-w-2xl relative overflow-auto max-h-[90vh]">

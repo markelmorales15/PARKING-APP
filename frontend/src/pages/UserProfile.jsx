@@ -112,7 +112,6 @@ const UserProfile = () => {
         </section>
       </div>
     </div>
-    </div>
   );
 };
 

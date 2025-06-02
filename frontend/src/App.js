@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import GarageListing from './pages/GarageListing';
 import HomePage from './pages/HomePage';
-import BookingPage from './pages/BookinPage';
+import BookingPage from './pages/BookingPage';
 import UserProfile from './pages/UserProfile';
 import Register from './pages/Register';
 import GarageDetail from './pages/GarageDetail';
