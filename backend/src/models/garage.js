@@ -131,7 +131,17 @@ class Garage {
       throw error;
     }
   }
-
+  static async getAverageRating(garageId) {
+    const query = `
+      SELECT AVG(rating) AS average_rating
+      FROM reviews
+      WHERE garage_id = $1
+    `;
+    const result = await pool.query(query, [garageId]);
+    const average = result.rows[0]?.average_rating;
+    return average ? parseFloat(average).toFixed(2) : null;
+  }
+  
   // Get garage by ID
   static async getById(id) {
     const query = `

@@ -1,5 +1,21 @@
 import express from 'express';
 import {
+  getWalletBalance,
+  transferCredits
+} from '../controllers/walletController.js';
+import verifyToken from '../middlewares/verifyToken.js';
+
+const router = express.Router();
+
+// Get wallet balance for a user (protected)
+router.get('/:userId', verifyToken, getWalletBalance);
+
+// Transfer credits (protected - likely called internally or by admin)
+router.post('/transfer', verifyToken, transferCredits);
+
+export default router;
+import express from 'express';
+import {
   getBalance,
   addFunds,
   getTransactionHistory

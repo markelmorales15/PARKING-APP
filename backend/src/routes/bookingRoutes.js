@@ -5,7 +5,8 @@ import {
   getBookingById,
   getGarageBookings,
   updateBookingStatus,
-  cancelBooking
+  cancelBooking,
+  generateInvoice
 } from '../controllers/bookingController.js';
 import verifyToken from '../middlewares/verifyToken.js';
 
@@ -24,9 +25,12 @@ router.get('/:id', verifyToken, getBookingById);
 router.get('/garage/:garageId', verifyToken, getGarageBookings);
 
 // Update booking status (owner only)
-router.put('/:id/status', verifyToken, updateBookingStatus);
+router.put('/:id/status', verifyToken, updateBookingStatus); // Ensure this line is present and correct
 
 // Cancel booking (user only)
 router.delete('/:id', verifyToken, cancelBooking);
+
+// Generate booking invoice (protected)
+router.get('/:id/invoice', verifyToken, generateInvoice);
 
 export default router;

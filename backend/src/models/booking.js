@@ -129,7 +129,7 @@ class Booking {
       // Update the booking status to cancelled
       const updateQuery = `
         UPDATE bookings
-        SET status = 'cancelled', updated_at = NOW()
+        SET status = 'canceled', updated_at = NOW()
         WHERE id = $1
         RETURNING *
       `;

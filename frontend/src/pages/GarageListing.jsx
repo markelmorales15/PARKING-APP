@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const GarageListing = () => {
   const [garages, setGarages] = useState([]);
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -11,76 +12,22 @@ const GarageListing = () => {
     // Fetch garage listings from backend API
     const fetchGarages = async () => {
       try {
+        setError(null); // Clear previous errors
         setIsLoading(true);
-        // In a real implementation, this would be an actual API call
-        // const response = await fetch('/api/garages');
-        // const data = await response.json();
 
-        // For development purposes, using mock data
-        setTimeout(() => {
-          const mockGarages = [
-            {
-              id: '1',
-              name: 'Downtown Secure Garage',
-              description: 'Well-maintained garage in the heart of downtown. 24/7 security cameras and remote access provided. Perfect for daily commuters.',
-              price: 25.00,
-              dimensions: '10x20 ft',
-              accessType: 'Remote',
-              covered: true,
-              location: '123 Main St, Downtown',
-              photos: ['https://images.unsplash.com/photo-1486006920555-c77dcf18193c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80']
-            },
-            {
-              id: '2',
-              name: 'Suburban Parking Space',
-              description: 'Clean and spacious garage in a quiet neighborhood. Ideal for medium-sized vehicles with additional storage space available.',
-              price: 20.00,
-              dimensions: '12x22 ft',
-              accessType: 'Keypad',
-              covered: true,
-              location: '456 Oak Ave, Suburbia',
-              photos: ['https://images.unsplash.com/photo-1558349699-f6dd3c78be7f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80']
-            },
-            {
-              id: '3',
-              name: 'Riverside Carport',
-              description: 'Covered carport with security cameras. Great for short-term parking or weekend use. Easy access to major highways.',
-              price: 15.00,
-              dimensions: '10x18 ft',
-              accessType: 'Manual',
-              covered: false,
-              location: '789 River Rd, Riverside',
-              photos: ['https://images.unsplash.com/photo-1565361641430-1f15c3467d32?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80']
-            },
-            {
-              id: '4',
-              name: 'Luxury Condo Garage',
-              description: 'Premium underground parking in luxury condominium. Climate controlled with 24/7 concierge. Suitable for luxury vehicles.',
-              price: 35.00,
-              dimensions: '12x24 ft',
-              accessType: 'Key Fob',
-              covered: true,
-              location: '1010 Parkway Blvd, Eastside',
-              photos: ['https://images.unsplash.com/photo-1470224114660-3f6686c562eb?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80']
-            },
-            {
-              id: '5',
-              name: 'Historic District Garage',
-              description: 'Charming brick garage in the historic district. Walking distance to restaurants and shops. Perfect for weekend visitors.',
-              price: 28.00,
-              dimensions: '10x20 ft',
-              accessType: 'Smart Lock',
-              covered: true,
-              location: '222 Heritage Lane, Old Town',
-              photos: ['https://images.unsplash.com/photo-1523849161192-3a6e717932c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80']
-            }
-          ];
-          setGarages(mockGarages);
-          setIsLoading(false);
-        }, 500);
+        const response = await fetch('/api/garages');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setGarages(data);
       } catch (error) {
         console.error('Error fetching garages:', error);
-        setIsLoading(false);
+        setError('Failed to load garages. Please try again later.'); // Set user-friendly error message
+      } finally {
+          setIsLoading(false);
       }
     };
 
@@ -96,6 +43,14 @@ const GarageListing = () => {
     return (
       <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
         <div className="text-xl">Loading garages...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
+        <div className="text-xl text-red-600">{error}</div>
       </div>
     );
   }

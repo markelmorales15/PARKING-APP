@@ -18,7 +18,7 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
 import creditRoutes from './routes/creditRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
-
+import reviewRoutes from './routes/reviewRoutes.js';
 // Configuration
 dotenv.config();
 const app = express();
@@ -75,6 +75,8 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/credits', creditRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/reviews', reviewRoutes);
+
 
 // Handle image uploads
 app.post('/api/upload', upload.array('images', 10), (req, res) => {

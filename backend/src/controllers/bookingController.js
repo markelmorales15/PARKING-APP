@@ -2,6 +2,9 @@ import Booking from '../models/booking.js';
 import Garage from '../models/garage.js';
 import Credit from '../models/credit.js';
 import pool from '../config/db.js';
+import PDFDocument from 'pdfkit';
+import User from '../models/user.js';
+import { transferCredits } from './walletController.js'; // Assuming walletController.js for wallet functions
 
 // Create a new booking
 export const createBooking = async (req, res) => {
@@ -151,6 +154,176 @@ export const createBooking = async (req, res) => {
   }
 };
 
+// Generate invoice for a booking (renter or owner only)
+export const generateInvoice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Get booking details
+    const booking = await Booking.getById(id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if booking belongs to the user or the garage owner
+    const garage = await Garage.getById(booking.garage_id);
+
+    if (!garage) {
+       return res.status(404).json({
+         success: false,
+         message: 'Associated garage not found'
+       });
+    }
+
+    if (booking.user_id !== userId && garage.owner_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to generate invoice for this booking'
+      });
+    }
+
+    // Ensure the booking is confirmed before generating an invoice
+    if (booking.status !== 'confirmed') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invoice can only be generated for confirmed bookings'
+        });
+    }
+
+    // Fetch user details (renter)
+    const renter = await User.findById(booking.user_id);
+
+    // Create a new PDF document
+    const doc = new PDFDocument();
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice_${booking.id}.pdf`);
+
+    // Pipe the PDF to the response
+    doc.pipe(res);
+
+    // Add content to the PDF
+    doc.fontSize(25).text('Garage Rental Invoice', { align: 'center' });
+    doc.fontSize(12).text(`Invoice ID: ${booking.id}`, { align: 'right' });
+    doc.moveDown();
+
+    doc.text(`Booking Details:`);
+    doc.text(`Garage: ${garage.name}`);
+    doc.text(`Location: ${garage.location}`);
+    doc.text(`Dates: ${new Date(booking.start_date).toLocaleDateString()} to ${new Date(booking.end_date).toLocaleDateString()}`);
+    doc.text(`Duration: ${Math.ceil((new Date(booking.end_date) - new Date(booking.start_date)) / (1000 * 60 * 60 * 24))} days`);
+    doc.moveDown();
+
+    doc.text(`Renter Information:`);
+    doc.text(`Name: ${renter.first_name} ${renter.last_name}`);
+    doc.text(`Email: ${renter.email}`);
+    doc.moveDown();
+
+    doc.text(`Total Price: $${booking.total_price.toFixed(2)}`);
+
+    // Finalize the PDF and end the stream
+    doc.end();
+
+  } catch (error) {
+    console.error('Generate invoice error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error generating invoice'
+    });
+  }
+};
+
+// Generate invoice for a booking (renter or owner only)
+export const generateInvoice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Get booking details
+    const booking = await Booking.getById(id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if booking belongs to the user or the garage owner
+    const garage = await Garage.getById(booking.garage_id);
+
+    if (!garage) {
+       return res.status(404).json({
+         success: false,
+         message: 'Associated garage not found'
+       });
+    }
+
+    if (booking.user_id !== userId && garage.owner_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to generate invoice for this booking'
+      });
+    }
+
+    // Ensure the booking is confirmed before generating an invoice
+    if (booking.status !== 'confirmed') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invoice can only be generated for confirmed bookings'
+        });
+    }
+
+    // Fetch user details (renter)
+    const renter = await User.findById(booking.user_id);
+
+    // Create a new PDF document
+    const doc = new PDFDocument();
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice_${booking.id}.pdf`);
+
+    // Pipe the PDF to the response
+    doc.pipe(res);
+
+    // Add content to the PDF
+    doc.fontSize(25).text('Garage Rental Invoice', { align: 'center' });
+    doc.fontSize(12).text(`Invoice ID: ${booking.id}`, { align: 'right' });
+    doc.moveDown();
+
+    doc.text(`Booking Details:`);
+    doc.text(`Garage: ${garage.name}`);
+    doc.text(`Location: ${garage.location}`);
+    doc.text(`Dates: ${new Date(booking.start_date).toLocaleDateString()} to ${new Date(booking.end_date).toLocaleDateString()}`);
+    doc.text(`Duration: ${Math.ceil((new Date(booking.end_date) - new Date(booking.start_date)) / (1000 * 60 * 60 * 24))} days`);
+    doc.moveDown();
+
+    doc.text(`Renter Information:`);
+    doc.text(`Name: ${renter.first_name} ${renter.last_name}`);
+    doc.text(`Email: ${renter.email}`);
+    doc.moveDown();
+
+    doc.text(`Total Price: $${booking.total_price.toFixed(2)}`);
+
+    // Finalize the PDF and end the stream
+    doc.end();
+
+  } catch (error) {
+    console.error('Generate invoice error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error generating invoice'
+    });
+  }
+};
+
 // Update booking status (owner only)
 export const updateBookingStatus = async (req, res) => {
   try {
@@ -158,7 +331,7 @@ export const updateBookingStatus = async (req, res) => {
     const { status } = req.body;
     const userId = req.user.id;
     
-    if (!['confirmed', 'rejected', 'cancelled_by_owner'].includes(status)) {
+    if (!['confirmed', 'rejected', 'canceled'].includes(status)) {
       return res.status(400).json({ 
         success: false, 
         message: 'Invalid status' 
@@ -186,19 +359,57 @@ export const updateBookingStatus = async (req, res) => {
     }
     
     // Update booking status
-    const updatedBooking = await Booking.updateStatus(id, status);
+    // Use a transaction for status update and potential credit transfer
+    const client = await pool.connect();
 
-    // Notify the user about the status change
-    req.app.get('socketService').notifyUser(booking.user_id, 'bookingStatusUpdate', {
-      bookingId: id,
-      status: status,
-      garageId: booking.garage_id
-    });
+    try {
+      await client.query('BEGIN');
+
+      const updatedBooking = await Booking.updateStatus(id, status);
+
+      if (status === 'confirmed') {
+        // Deduct from renter, transfer to owner minus commission
+        const renterId = updatedBooking.user_id;
+        const ownerId = garage.owner_id;
+        const amount = updatedBooking.total_price;
+        const bookingId = updatedBooking.id;
+ try {
+ await transferCredits(renterId, ownerId, amount, bookingId);
+ } catch (walletError) {
+ // Rollback the booking status update if credit transfer fails
+ await client.query('ROLLBACK');
+          // Rethrow the wallet error to be caught by the outer try/catch
+ throw walletError;
+ }
+
+        // Note: If transferCredits throws an error (e.g., insufficient funds),
+      }
+
+      await client.query('COMMIT');
+
+      // Notify the user about the status change
+      req.app.get('socketService').notifyUser(booking.user_id, 'bookingStatusUpdate', {
+        bookingId: id,
+        status: status,
+        garageId: booking.garage_id
+      });
+
+      res.status(200).json({
+        success: true,
+        booking: updatedBooking
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      // Check for specific insufficient balance error from transferCredits
+      if (error.message === 'Insufficient balance') {
+        return res.status(400).json({ success: false, message: error.message });
+      }
+      throw error; // Rethrow other errors to be caught by the main try/catch
+    } finally {
+      client.release();
+    }
     
-    res.status(200).json({
-      success: true,
-      booking: updatedBooking
-    });
   } catch (error) {
     console.error('Update booking status error:', error);
     res.status(500).json({ 
@@ -327,11 +538,10 @@ export const cancelBooking = async (req, res) => {
     const userId = req.user.id;
     
     try {
-      const cancelledBooking = await Booking.cancel(id, userId);
+      const canceledBooking = await Booking.cancel(id, userId); // Use 'canceled' status internally in Booking model
 
-      // Notify the garage owner about the cancellation
       req.app.get('socketService').notifyUser(
-        cancelledBooking.garage_owner_id,
+        canceledBooking.owner_id, // Assuming Booking.cancel now returns the owner_id
         'bookingCancelled',
         {
           bookingId: id,
@@ -339,7 +549,7 @@ export const cancelBooking = async (req, res) => {
         }
       );
       
-      res.status(200).json({
+      res.status(200).json({ // Corrected variable name
         success: true,
         booking: cancelledBooking
       });
