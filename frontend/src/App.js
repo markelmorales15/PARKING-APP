@@ -16,10 +16,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/HomePage" element={<HomePage />} />
-        <Route path="/Dashboard" element={<Dashboard />} />
-        <Route path="/GarageListing" element={<GarageListing />} />
-        <Route path="/BookingPage" element={<BookingPage />} />
-        <Route path="/Register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/garages" element={<GarageListing />} />
+        <Route path="/booking/:id" element={<BookingPage />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/GarageDetail" element={<GarageDetail />} />
       </Routes>
