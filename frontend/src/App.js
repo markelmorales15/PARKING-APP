@@ -9,21 +9,24 @@ import BookingPage from './pages/BookingPage';
 import UserProfile from './pages/UserProfile';
 import Register from './pages/Register';
 import GarageDetail from './pages/GarageDetail';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/HomePage" element={<HomePage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/garages" element={<GarageListing />} />
-        <Route path="/booking/:id" element={<BookingPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/UserProfile" element={<UserProfile />} />
-        <Route path="/GarageDetail" element={<GarageDetail />} />
-      </Routes>
-    </Router>
+    <AuthProvider> {/* 🔒 Wrapping the app with AuthProvider */}
+      <Router>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/HomePage" element={<HomePage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/garages" element={<GarageListing />} />
+          <Route path="/booking/:id" element={<BookingPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/UserProfile" element={<UserProfile />} />
+          <Route path="/GarageDetail" element={<GarageDetail />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

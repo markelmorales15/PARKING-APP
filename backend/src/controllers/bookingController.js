@@ -566,4 +566,4 @@ export const cancelBooking = async (req, res) => {
       message: 'Server error' 
     });
   }
-};
+};c
