@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import multer from 'multer';
 import path from 'path';
+import { createServer } from 'http';
+import SocketService from './services/socketService.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -20,10 +22,14 @@ import walletRoutes from './routes/walletRoutes.js';
 // Configuration
 dotenv.config();
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Initialize Socket.IO
+const socketService = new SocketService(httpServer);
 
 // Middleware
 app.use(cors());
@@ -48,7 +54,6 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: function (req, file, cb) {
-    // Accept only images
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
       return cb(new Error('Only image files are allowed!'), false);
     }
@@ -58,6 +63,9 @@ const upload = multer({
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Make socketService available to routes
+app.set('socketService', socketService);
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -94,7 +102,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 

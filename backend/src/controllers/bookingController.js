@@ -70,6 +70,15 @@ export const createBooking = async (req, res) => {
     });
     
     if (conflictingBookings.length > 0) {
+      // Notify other users viewing this garage about the conflict
+      req.app.get('socketService').notifyGarageAvailability(garageId, {
+        available: false,
+        conflictingDates: conflictingBookings.map(b => ({
+          start: b.start_date,
+          end: b.end_date
+        }))
+      });
+
       return res.status(400).json({ 
         success: false, 
         message: 'Garage is not available for the selected dates' 
@@ -99,10 +108,9 @@ export const createBooking = async (req, res) => {
       // Handle credits if needed
       if (useCredits) {
         try {
-          const creditsNeeded = Math.min(totalPrice, 100); // Example: maximum 100 credits can be used per booking
+          const creditsNeeded = Math.min(totalPrice, 100);
           await Credit.useCredits(userId, creditsNeeded, booking.id);
           
-          // Update booking to reflect credit usage
           await client.query(
             'UPDATE bookings SET credits_used = $1 WHERE id = $2',
             [creditsNeeded, booking.id]
@@ -111,11 +119,17 @@ export const createBooking = async (req, res) => {
           booking.credits_used = creditsNeeded;
         } catch (err) {
           console.log('Credit usage failed:', err.message);
-          // Continue with the booking even if credit usage fails
         }
       }
       
       await client.query('COMMIT');
+
+      // Notify users about the new booking
+      req.app.get('socketService').broadcastBookingConfirmation(garageId, {
+        bookingId: booking.id,
+        startDate: booking.start_date,
+        endDate: booking.end_date
+      });
       
       res.status(201).json({
         success: true,
@@ -130,6 +144,63 @@ export const createBooking = async (req, res) => {
     }
   } catch (error) {
     console.error('Create booking error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+};
+
+// Update booking status (owner only)
+export const updateBookingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.user.id;
+    
+    if (!['confirmed', 'rejected', 'cancelled_by_owner'].includes(status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid status' 
+      });
+    }
+    
+    // Get booking details
+    const booking = await Booking.getById(id);
+    
+    if (!booking) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Booking not found' 
+      });
+    }
+    
+    // Check if user is the garage owner
+    const garage = await Garage.getById(booking.garage_id);
+    
+    if (garage.owner_id !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Not authorized to update this booking' 
+      });
+    }
+    
+    // Update booking status
+    const updatedBooking = await Booking.updateStatus(id, status);
+
+    // Notify the user about the status change
+    req.app.get('socketService').notifyUser(booking.user_id, 'bookingStatusUpdate', {
+      bookingId: id,
+      status: status,
+      garageId: booking.garage_id
+    });
+    
+    res.status(200).json({
+      success: true,
+      booking: updatedBooking
+    });
+  } catch (error) {
+    console.error('Update booking status error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error' 
@@ -249,65 +320,24 @@ export const getGarageBookings = async (req, res) => {
   }
 };
 
-// Update booking status (owner only)
-export const updateBookingStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const userId = req.user.id;
-    
-    if (!['confirmed', 'rejected', 'cancelled_by_owner'].includes(status)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid status' 
-      });
-    }
-    
-    // Get booking details
-    const booking = await Booking.getById(id);
-    
-    if (!booking) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Booking not found' 
-      });
-    }
-    
-    // Check if user is the garage owner
-    const garage = await Garage.getById(booking.garage_id);
-    
-    if (garage.owner_id !== userId) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Not authorized to update this booking' 
-      });
-    }
-    
-    // Update booking status
-    const updatedBooking = await Booking.updateStatus(id, status);
-    
-    res.status(200).json({
-      success: true,
-      booking: updatedBooking
-    });
-  } catch (error) {
-    console.error('Update booking status error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
-  }
-};
-
 // Cancel booking (user only)
 export const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
     
-    // Cancel the booking
     try {
       const cancelledBooking = await Booking.cancel(id, userId);
+
+      // Notify the garage owner about the cancellation
+      req.app.get('socketService').notifyUser(
+        cancelledBooking.garage_owner_id,
+        'bookingCancelled',
+        {
+          bookingId: id,
+          garageId: cancelledBooking.garage_id
+        }
+      );
       
       res.status(200).json({
         success: true,
