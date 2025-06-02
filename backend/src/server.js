@@ -15,6 +15,7 @@ import garageRoutes from './routes/garageRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
 import creditRoutes from './routes/creditRoutes.js';
+import walletRoutes from './routes/walletRoutes.js';
 
 // Configuration
 dotenv.config();
@@ -65,6 +66,7 @@ app.use('/api/garages', garageRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/credits', creditRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Handle image uploads
 app.post('/api/upload', upload.array('images', 10), (req, res) => {
