@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Garage rental web application",
   "scripts": {
-    "dev": "cd backend && npm run dev",
+    "dev": "cd backend && npm install && npm run dev",
     "dev:frontend": "cd frontend && npm run start",
     "dev:backend": "cd backend && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
